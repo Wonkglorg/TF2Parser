@@ -35,28 +35,42 @@ public class TFDataObject {
     }
 
     /**
-     * Creates a new DataObject from a key value pair
+     * Creates a new DataObject from a list of strings if they match a valid format as tf2 layed it out (new lines matter unlike json)
      *
-     * @param content
-     * @return
+     * @param content the content to parse
+     * @return a new DataObject
      */
     public static TFDataObject from(List<String> content) {
         return new TFDataObject("", "", content);
     }
 
+    /**
+     * Creates a new DataObject from a file
+     *
+     * @param path    the path to the file
+     * @param charset the charset to use
+     * @return a new DataObject
+     */
     public static TFDataObject from(Path path, Charset charset) {
         return new TFDataObject("", "", TxtFileUtil.readFromFile(path.toFile(), charset));
     }
 
+    /**
+     * Creates a new DataObject from a file
+     *
+     * @param path    the path to the file
+     * @param charset the charset to use
+     * @return a new DataObject
+     */
     public static TFDataObject from(String path, Charset charset) {
         return new TFDataObject("", "", TxtFileUtil.readFromFile(path, charset));
     }
 
     /**
-     * Merges multiple DataObjects into one where the returned object represents a new root
+     * Merges multiple DataObjects into one where the returned object represents a new root with updated sub paths matching the new structure
      *
-     * @param objects
-     * @return
+     * @param objects the objects to merge
+     * @return a new DataObject
      */
     public static TFDataObject merge(TFDataObject... objects) {
         TFDataObject merged = TFDataObject.from(new ArrayList<>());
@@ -89,13 +103,22 @@ public class TFDataObject {
         }
     }
 
+    /**
+     * Merges multiple DataObjects into one where the returned object represents a new root with updated sub paths matching the new structure
+     *
+     * @param objects the objects to merge
+     * @return a new DataObject
+     */
+
     public static TFDataObject merge(List<TFDataObject> objects) {
         return merge(objects.toArray(new TFDataObject[0]));
     }
 
-    private static final Pattern pattern = Pattern.compile("\"([^\"]+)\"");
+    //matches any word enclosed in quotes
+    private static final Pattern keyWordPattern = Pattern.compile("\"([^\"]+)\"");
 
 
+    //todo perhaps make it more robust in the way it is split up? or not yml is also very strict no need to overcomplicate
     //todo for the love of god do not ever ever ever touch this again! it is working and I don't want to break it
     private void parse(List<String> content, String parentPath) {
         if (content == null || content.isEmpty()) {
@@ -110,7 +133,7 @@ public class TFDataObject {
             line = line.trim().replace("\t", "");
             if (line.isEmpty()) continue;
             if (depth == 1) {
-                Matcher matcher = pattern.matcher(line);
+                Matcher matcher = keyWordPattern.matcher(line);
                 if (matcher.find()) {
                     String newKey = matcher.group(1);
                     if (!matcher.find()) {
@@ -154,7 +177,7 @@ public class TFDataObject {
                 }
             }
             if (depth == 0) {
-                Matcher matcher = pattern.matcher(line);
+                Matcher matcher = keyWordPattern.matcher(line);
                 if (matcher.find()) {
                     String tempKey = matcher.group(1);
                     if (matcher.find()) {
@@ -163,6 +186,7 @@ public class TFDataObject {
                         TFDataObject dataObject = new TFDataObject(path, key, value);
                         contentMap.put(key, dataObject);
                     } else {
+                        //should only ever happen once, if not then the file is not formatted correctly and any errors should not be dealt with on my end
                         baseKey = tempKey;
                     }
                 }
@@ -172,6 +196,8 @@ public class TFDataObject {
                 addStringElementToMap(key, line, childContentMap);
             }
         }
+
+        this.key = baseKey;
     }
 
     private void addStringElementToMap(String key, String value, Map<String, List<String>> map) {
@@ -181,10 +207,47 @@ public class TFDataObject {
     }
 
 
+    //todo change this to actually make sense? create subpaths until this matches the correct structure?
+
+    /**
+     * Adds a new key value pair to the data object
+     *
+     * @param path  the path to add the key value pair to
+     * @param key   the key
+     * @param value the value
+     */
     public void add(String path, String key, String value) {
-        contentMap.put(key, new TFDataObject(path, key, value));
+        String[] paths = path.split("\\.");
+
+        if (paths.length == 0) {
+            contentMap.put(key, new TFDataObject("", key, value));
+            return;
+        }
+
+        recursiveAdd(paths, key, value, 0, this, "");
     }
 
+    private void recursiveAdd(String[] paths, String key, String value, int depth, TFDataObject dataObject, String currentPath) {
+        if (depth == paths.length) {
+            dataObject.getContentMap().put(key, new TFDataObject(currentPath, key, value));
+            return;
+        }
+
+        String currentKey = paths[depth];
+        String newPath = currentPath.isEmpty() ? currentKey : currentPath + "." + currentKey;
+
+        if (!dataObject.getContentMap().containsKey(currentKey)) {
+            dataObject.getContentMap().put(currentKey, new TFDataObject(newPath, currentKey, (String) null));
+        }
+
+        recursiveAdd(paths, key, value, depth + 1, dataObject.getContentMap().get(currentKey), newPath);
+    }
+
+    /**
+     * Gets all children with 0 depth from the current data object
+     *
+     * @return
+     */
     public Set<String> getChildren() {
         if (contentMap.isEmpty() || isValue) {
             return Set.of();
@@ -192,12 +255,24 @@ public class TFDataObject {
         return contentMap.keySet();
     }
 
-    public TFDataObject get(String key) {
-        return getSubPath(contentMap, key.split("\\."));
+    /**
+     * Gets a child from the current data object, can be a path to any object below it.
+     *
+     * @param path
+     * @return
+     */
+    public TFDataObject get(String path) {
+        return getSubPath(contentMap, path.split("\\."));
     }
 
-    public boolean containsKey(String key) {
-        return getSubPath(contentMap, key.split("\\.")) != null;
+    /**
+     * Checks if the current data object contains a key
+     *
+     * @param path
+     * @return
+     */
+    public boolean containsKey(String path) {
+        return getSubPath(contentMap, path.split("\\.")) != null;
     }
 
     private TFDataObject getSubPath(Map<String, TFDataObject> dataMap, String[] keys) {
@@ -215,10 +290,22 @@ public class TFDataObject {
     }
 
 
+    /**
+     * Gets the current objects key
+     *
+     * @return
+     */
     public String getKey() {
         return key;
     }
 
+    /**
+     * Gets a value from the specified path by its key
+     *
+     * @param path
+     * @param key
+     * @return
+     */
     public String getValue(String path, String key) {
 
         TFDataObject dataObject = getSubPath(contentMap, path.split("\\."));
@@ -228,6 +315,12 @@ public class TFDataObject {
         return dataObject.get(key).getValue();
     }
 
+    /**
+     * Gets the current objects value
+     *
+     * @param defaultValue the default value to return if no value is present
+     * @return the value
+     */
     public String getValue(String defaultValue) {
         if (isValue) {
             if (value == null) {
@@ -238,6 +331,22 @@ public class TFDataObject {
         return defaultValue;
     }
 
+    /**
+     * @return the associated value of the current object or null
+     */
+    public String getValue() {
+        if (isValue) return value;
+        return null;
+    }
+
+    /**
+     * Gets a value from the specified path by its key
+     *
+     * @param path         the path to the value
+     * @param key          the key of the value
+     * @param defaultValue the default value to return if no value is present
+     * @return
+     */
     public String getValue(String path, String key, String defaultValue) {
         TFDataObject dataObject = getSubPath(contentMap, path.split("\\."));
         if (dataObject == null) {
@@ -246,19 +355,19 @@ public class TFDataObject {
         return dataObject.get(key).getValue(defaultValue);
     }
 
-    public String get(String key, String defaultValue) {
-        TFDataObject dataObject = contentMap.get(key);
-        if (dataObject == null) {
-            return defaultValue;
-        }
-        return dataObject.getValue();
-    }
-
-
-    public Map<String, TFDataObject> getContentMap() {
+    private Map<String, TFDataObject> getContentMap() {
         return contentMap;
     }
 
+
+    //todo create immuteable map copy
+
+
+    /**
+     * Converts the data object to a json string
+     *
+     * @return the json string
+     */
     public String toJson() {
         StringBuilder builder = new StringBuilder();
         builder.append("{\n");
@@ -284,13 +393,8 @@ public class TFDataObject {
     }
 
 
-    public String getValue() {
-        if (isValue) return value;
-        return null;
-    }
-
-
     /**
+     * //todo test if this all works
      * Returns all key values in the data object as a list of DataObjectEntry
      *
      * @param searchPath the path to search for, if null all key values are returned
@@ -379,32 +483,16 @@ public class TFDataObject {
         return input.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
-    private String formatKeyValue(String input) {
-        return input.replaceAll("^\"|\"$", "");
-    }
-
     public String getPath() {
         return path;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-        isValue = value != null;
-
-    }
-
-    public void setKey(String key) {
-        this.key = key;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
     }
 
     @Override
     public String toString() {
         return contentMap.toString();
     }
+
+    //-------records and data classes ---------
 
     private record ValueCheck(String key, String value) {
         public boolean hasKey() {

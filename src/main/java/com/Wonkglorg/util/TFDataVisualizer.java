@@ -17,7 +17,8 @@ public class TFDataVisualizer {
     public void printFormatted(String path, String format, int depth, int pathWidth, int keyWidth, int valueWidth) {
         List<TFDataObject.DataObjectEntry> entries = dataObject.getKeyValues(path, depth);
 
-        if (pathWidth == 0) pathWidth = entries.stream().mapToInt(e -> e.path().length()).max().orElse(0);
+        if (pathWidth == 0)
+            pathWidth = entries.stream().mapToInt(e -> (dataObject.getKey() + "." + e.path()).length()).max().orElse(0);
         if (keyWidth == 0) keyWidth = entries.stream().mapToInt(e -> e.key().length()).max().orElse(0);
         if (valueWidth == 0) valueWidth = entries.stream().mapToInt(e -> e.value().length()).max().orElse(0);
 
@@ -33,7 +34,7 @@ public class TFDataVisualizer {
         System.out.println("_".repeat(pathWidth + keyWidth + valueWidth + 9));
 
         for (TFDataObject.DataObjectEntry entry : entries) {
-            String p = formatString(entry.path(), pathWidth);
+            String p = formatString(dataObject.getKey() + "." + entry.path(), pathWidth);
             String k = formatString(entry.key(), keyWidth);
             String v = formatString(entry.value(), valueWidth);
             String output = format.replace("%path", p).replace("%key", k).replace("%value", v);

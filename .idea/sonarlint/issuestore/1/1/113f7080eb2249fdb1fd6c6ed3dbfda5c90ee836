@@ -1,33 +1,37 @@
 
-u	java:S135m"YReduce the total number of break and continue statements in this loop to use at most one.(É’îá8å êšÙ1
-v	java:S120"ZRename this package name to match the regular expression '^[a-z_]+(\.[a-z_][a-z0-9_]*)*$'.(ùáñŞ8æ êšÙ1
+v	java:S135„"YReduce the total number of break and continue statements in this loop to use at most one.(É’îá8ÜÔÀÎÙ1
+v	java:S120"ZRename this package name to match the regular expression '^[a-z_]+(\.[a-z_][a-z0-9_]*)*$'.(ùáñŞ8ŞÔÀÎÙ1
 o
-java:S3776d"RRefactor this method to reduce its Cognitive Complexity from 49 to the 15 allowed.(ò­Œè8´¿ÍÙ1
+java:S3776{"RRefactor this method to reduce its Cognitive Complexity from 49 to the 15 allowed.(ò­Œè8ÎÕÀÎÙ1
+N
+java:S1135y"2Complete the task associated to this TODO comment.(ïŸB8ÀŒšÏÙ1
 T
-java:S1135c"2Complete the task associated to this TODO comment.(¨Ò½ôüÿÿÿÿ8öÊ¨ÍÙ1
-Y
-java:S1117j"7Rename "key" which hides the field declared at line 19.(¤Êéµÿÿÿÿÿ8Ï¡êšÙ1
-[
-java:S1117z"9Rename "value" which hides the field declared at line 18.(—ä×üÿÿÿÿ8Ğ¡êšÙ1
+java:S1135z"2Complete the task associated to this TODO comment.(¨Ò½ôüÿÿÿÿ8ÎÕÀÎÙ1
+Z
+java:S1117"7Rename "key" which hides the field declared at line 19.(¤Êéµÿÿÿÿÿ8ÏÕÀÎÙ1
 \
-java:S1117¢"9Rename "value" which hides the field declared at line 18.(—ä×üÿÿÿÿ8·¿ÍÙ1
-U
-java:S1117®"7Rename "key" which hides the field declared at line 19.(”µ‰†8Ô¡êšÙ1
+java:S1117‘"9Rename "value" which hides the field declared at line 18.(—ä×üÿÿÿÿ8ÏÕÀÎÙ1
 \
-java:S1117¯"9Rename "value" which hides the field declared at line 18.(Ÿ€°ˆşÿÿÿÿ8Ô¡êšÙ1
+java:S1117¹"9Rename "value" which hides the field declared at line 18.(—ä×üÿÿÿÿ8ĞÕÀÎÙ1
+P
+java:S1135Ò"2Complete the task associated to this TODO comment.(íŸÿ8ÒÕÀÎÙ1
 U
-java:S1117Á"7Rename "key" which hides the field declared at line 19.(”µ‰†8Õ¡êšÙ1
+java:S1135ë"2Complete the task associated to this TODO comment.(Õ˜Øûÿÿÿÿ8ÕÕÀÎÙ1
+P
+java:S1135"2Complete the task associated to this TODO comment.(õáÍ¶8ì†ˆÏÙ1
+U
+java:S1117–"7Rename "key" which hides the field declared at line 19.(”µ‰†8ÖÕÀÎÙ1
 \
-java:S1117Â"9Rename "value" which hides the field declared at line 18.(Ÿ€°ˆşÿÿÿÿ8Õ¡êšÙ1
+java:S1117—"9Rename "value" which hides the field declared at line 18.(Ÿ€°ˆşÿÿÿÿ8×ÕÀÎÙ1
 U
-java:S1117Ü"7Rename "key" which hides the field declared at line 19.(”µ‰†8Õ¡êšÙ1
-U
-java:S1117ì"7Rename "key" which hides the field declared at line 19.(”µ‰†8Ö¡êšÙ1
+java:S1117©"7Rename "key" which hides the field declared at line 19.(”µ‰†8ØÕÀÎÙ1
 \
-java:S1117í"9Rename "value" which hides the field declared at line 18.(Ÿ€°ˆşÿÿÿÿ8Ö¡êšÙ1
-r
-java:S5850ÿ"TGroup parts of the regex together to make the intended operator precedence explicit.(šïüÚ8×¡êšÙ1
-Q
-java:S1144ş"3Remove this unused private "formatKeyValue" method.(–Æ‚À8¼¿ÍÙ1
+java:S1117ª"9Rename "value" which hides the field declared at line 18.(Ÿ€°ˆşÿÿÿÿ8ØÕÀÎÙ1
+U
+java:S1117Ä"7Rename "key" which hides the field declared at line 19.(”µ‰†8ÙÕÀÎÙ1
+U
+java:S1117Ô"7Rename "key" which hides the field declared at line 19.(”µ‰†8ÚÕÀÎÙ1
+\
+java:S1117Õ"9Rename "value" which hides the field declared at line 18.(Ÿ€°ˆşÿÿÿÿ8ÚÕÀÎÙ1
 ã
-java:S6541d"ÅA "Brain Method" was detected. Refactor it to reduce at least one of the following metrics: LOC from 75 to 64, Complexity from 19 to 14, Nesting Level from 5 to 2, Number of Variables from 19 to 6.(ò­Œè8¼¿ÍÙ1
+java:S6541{"ÅA "Brain Method" was detected. Refactor it to reduce at least one of the following metrics: LOC from 76 to 64, Complexity from 19 to 14, Nesting Level from 5 to 2, Number of Variables from 19 to 6.(ò­Œè8ÜÕÀÎÙ1

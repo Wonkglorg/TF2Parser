@@ -24,7 +24,7 @@ public class TFDataObject {
         this.value = value;
         this.key = key;
         this.path = path;
-        isValue = true;
+        isValue = value != null;
     }
 
     private TFDataObject(String path, String key, List<String> content) {

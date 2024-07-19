@@ -427,18 +427,72 @@ public class TFDataObject {
     }
 
     private void toYaml(StringBuilder builder, int indentLevel, String indentAmount) {
-        String indent = indentAmount.repeat(indentLevel); // 2 spaces per indent level
-        for (Map.Entry<String, TFDataObject> entry : contentMap.entrySet()) {
-            builder.append(indent).append(entry.getKey()).append(": ");
-            TFDataObject dataObject = entry.getValue();
-            if (!dataObject.isValue) {
+        String indent = indentAmount.repeat(indentLevel);
+        Map<String, List<TFDataObject>> mergedContentMap = mergeDuplicates(contentMap);
+
+        for (Map.Entry<String, List<TFDataObject>> entry : mergedContentMap.entrySet()) {
+            String key = entry.getKey();
+            List<TFDataObject> dataObjects = entry.getValue();
+
+            // Quote the key if it contains special characters
+            builder.append(indent).append(quoteYaml(key)).append(":");
+
+            if (dataObjects.size() > 1) {
+                // Handle merging multiple data objects with the same key
                 builder.append("\n");
-                dataObject.toYaml(builder, indentLevel + 1, indentAmount);
+                for (TFDataObject dataObject : dataObjects) {
+                    if (!dataObject.isValue) {
+                        dataObject.toYaml(builder, indentLevel + 1, indentAmount);
+                    } else {
+                        builder.append(indentAmount.repeat(indentLevel + 1))
+                                .append("- \"").append(escapeYaml(dataObject.value)).append("\"\n");
+                    }
+                }
             } else {
-                builder.append(dataObject.value).append("\n");
+                // Single data object case
+                TFDataObject dataObject = dataObjects.get(0);
+                if (!dataObject.isValue) {
+                    builder.append("\n");
+                    dataObject.toYaml(builder, indentLevel + 1, indentAmount);
+                } else {
+                    builder.append(" \"").append(escapeYaml(dataObject.value)).append("\"\n");
+                }
             }
         }
     }
+
+    private Map<String, List<TFDataObject>> mergeDuplicates(Map<String, TFDataObject> originalMap) {
+        Map<String, List<TFDataObject>> mergedMap = new LinkedHashMap<>();
+        for (Map.Entry<String, TFDataObject> entry : originalMap.entrySet()) {
+            String key = entry.getKey();
+            TFDataObject value = entry.getValue();
+            mergedMap.computeIfAbsent(key, k -> new ArrayList<>()).add(value);
+        }
+        return mergedMap;
+    }
+
+    private String quoteYaml(String key) {
+        if (key == null) return "";
+        // Quote the key if it contains special characters
+        return key.contains(":") || key.contains(" ") || key.contains("\"") ? "\"" + key + "\"" : key;
+    }
+
+    private String escapeYaml(String value) {
+        if (value == null) return "";
+        return value.replace("\"", "\\\"");  // Escape quotes inside values
+    }
+
+    // Example methods for initialization
+    public void setValue(String value) {
+        this.isValue = true;
+        this.value = value;
+    }
+
+    public void addContent(String key, TFDataObject value) {
+        this.isValue = false;
+        this.contentMap.put(key, value);
+    }
+
 
     /**
      * Writes the json representation to a file
@@ -450,6 +504,18 @@ public class TFDataObject {
         Path path = Paths.get(directory, file);
         Files.createDirectories(path.getParent());
         Files.writeString(path, toJson());
+    }
+
+    /**
+     * Writes the yaml representation to a file
+     *
+     * @param file the file to save to
+     * @throws IOException
+     */
+    public void writeYamlToFile(String directory, String file, int indentAmount) throws IOException {
+        Path path = Paths.get(directory, file);
+        Files.createDirectories(path.getParent());
+        Files.writeString(path, toYaml(indentAmount));
     }
 
 

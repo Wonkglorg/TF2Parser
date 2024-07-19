@@ -383,6 +383,16 @@ public class TFDataObject {
      */
     public String toJson() {
         StringBuilder builder = new StringBuilder();
+        toJson(builder);
+        return builder.toString();
+    }
+
+    /**
+     * Helper method to convert the data object to a json string
+     *
+     * @param builder the StringBuilder to append to
+     */
+    private void toJson(StringBuilder builder) {
         builder.append("{\n");
         int size = contentMap.size();
         int count = 0;
@@ -391,7 +401,7 @@ public class TFDataObject {
             builder.append("\"").append(escapeJson(entry.getKey())).append("\" : ");
             TFDataObject dataObject = entry.getValue();
             if (!dataObject.isValue) {
-                builder.append(dataObject.toJson());
+                dataObject.toJson(builder);
             } else {
                 builder.append("\"").append(escapeJson(dataObject.value)).append("\"");
             }
@@ -402,7 +412,6 @@ public class TFDataObject {
             }
         }
         builder.append("}");
-        return builder.toString();
     }
 
     /**
@@ -468,6 +477,15 @@ public class TFDataObject {
         return entries;
     }
 
+    /**
+     * Returns all key values in the data object as a list of DataObjectEntry
+     *
+     * @param object     the object to search in
+     * @param path       the path to the object
+     * @param searchPath the path to search for, if null all key values are returned
+     * @param depth      the depth to search for, if -1 all key values are returned
+     * @return a list of DataObjectEntry
+     */
     private List<DataObjectEntry> getNestedKeyValues(TFDataObject object, String path, String searchPath, int depth) {
         List<DataObjectEntry> nestedEntries = new ArrayList<>();
         if (depth == 0) return nestedEntries;

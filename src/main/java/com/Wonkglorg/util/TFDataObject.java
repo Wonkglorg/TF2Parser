@@ -2,8 +2,11 @@ package com.Wonkglorg.util;
 
 import org.wonkglorg.files.readwrite.TxtFileUtil;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -84,19 +87,15 @@ public class TFDataObject {
 
     private static void mergeRecursive(TFDataObject object, String basePath, TFDataObject merged) {
         if (object.isValue) {
-            // If it's a single value, merge with the current base path
             merged.contentMap.put(basePath, object);
         } else {
-            // If it's a nested map, merge recursively with updated paths
             for (var entry : object.contentMap.entrySet()) {
                 String key = entry.getKey();
                 TFDataObject value = entry.getValue();
                 String newPath = basePath.isEmpty() ? key : basePath + "." + key;
                 if (merged.contentMap.containsKey(newPath)) {
-                    // If the key already exists, merge recursively
                     mergeRecursive(value, newPath, merged);
                 } else {
-                    // Otherwise, add the new entry directly
                     merged.contentMap.put(newPath, value);
                 }
             }
@@ -127,11 +126,14 @@ public class TFDataObject {
         int depth = 0;
         String baseKey = null;
         String key = null;
+        //keeps track of all the firest level children and stores their content
         Map<String, List<String>> childContentMap = new HashMap<>();
+        //currently only used with 1 value being the base key but used to have a different purpose staying if ever needed again
         Deque<String> pathStack = new ArrayDeque<>();
         for (String line : content) {
             line = line.trim().replace("\t", "");
             if (line.isEmpty()) continue;
+
             if (depth == 1) {
                 Matcher matcher = keyWordPattern.matcher(line);
                 if (matcher.find()) {
@@ -139,8 +141,11 @@ public class TFDataObject {
                     if (!matcher.find()) {
                         if (key == null) {
                             key = newKey;
+                            //only gets invoked if there is not already a current child collecting values, should not be the case usually but some edgecases needed it.
+                            //the key gets freed when the next inline is a normal value after a child has been closed
                             addStringElementToMap(key, line, childContentMap);
                         }
+                        //if the key has a value associated with it, it is added to the current map and not indented to the children
                     } else {
                         String value = matcher.group(1);
                         String newPath = String.join(".", pathStack);
@@ -151,6 +156,7 @@ public class TFDataObject {
 
                 }
             }
+
             if (line.startsWith("{")) {
                 depth++;
                 if (depth == 1) {
@@ -160,14 +166,18 @@ public class TFDataObject {
             }
             if (line.startsWith("}")) {
                 depth--;
+                //means nothing should be lefz and we can clear it all outif something comes after it,
+                //then the key will be overwritten but should potentially still work fine but that is not intended bvahavior
                 if (depth == 0) {
                     childContentMap.clear();
                     pathStack.pop();
                     continue;
                 }
+                //this is done because I needed to keep track of the values right under the root to further recurse
                 if (depth == 1) {
                     String newPath = parentPath;
                     newPath = newPath.isEmpty() ? baseKey : parentPath + "." + baseKey;
+                    //adds the final } line to the map otherwise its mismatched formatting
                     addStringElementToMap(key, line, childContentMap);
                     TFDataObject dataObject = new TFDataObject(newPath, key, childContentMap.get(key));
                     contentMap.put(key, dataObject);
@@ -180,6 +190,7 @@ public class TFDataObject {
                 Matcher matcher = keyWordPattern.matcher(line);
                 if (matcher.find()) {
                     String tempKey = matcher.group(1);
+                    //if this check passes we have a value to out key not a nested object
                     if (matcher.find()) {
                         key = tempKey;
                         String value = matcher.group(1);
@@ -192,6 +203,8 @@ public class TFDataObject {
                 }
                 continue;
             }
+
+            //anything after the first 2 levels (1 is the base level, 2 is the first nesting) will be stored and handled recursivly
             if (depth >= 2) {
                 addStringElementToMap(key, line, childContentMap);
             }
@@ -390,6 +403,44 @@ public class TFDataObject {
         }
         builder.append("}");
         return builder.toString();
+    }
+
+    /**
+     * Converts the data object to a YAML string
+     *
+     * @param indentAmount how many spaces an indent should be
+     * @return the YAML string
+     */
+    public String toYaml(int indentAmount) {
+        StringBuilder builder = new StringBuilder();
+        toYaml(builder, 0, " ".repeat(indentAmount));
+        return builder.toString();
+    }
+
+    private void toYaml(StringBuilder builder, int indentLevel, String indentAmount) {
+        String indent = indentAmount.repeat(indentLevel); // 2 spaces per indent level
+        for (Map.Entry<String, TFDataObject> entry : contentMap.entrySet()) {
+            builder.append(indent).append(entry.getKey()).append(": ");
+            TFDataObject dataObject = entry.getValue();
+            if (!dataObject.isValue) {
+                builder.append("\n");
+                dataObject.toYaml(builder, indentLevel + 1, indentAmount);
+            } else {
+                builder.append(dataObject.value).append("\n");
+            }
+        }
+    }
+
+    /**
+     * Writes the json representation to a file
+     *
+     * @param file the file to save to
+     * @throws IOException
+     */
+    public void writeJsonToFile(String directory, String file) throws IOException {
+        Path path = Paths.get(directory, file);
+        Files.createDirectories(path.getParent());
+        Files.writeString(path, toJson());
     }
 
 
